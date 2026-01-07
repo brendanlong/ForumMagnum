@@ -86,7 +86,7 @@ export const servePostRSS = async (terms: RSSTerms,) => {
     const postLink = `<a href="${postGetPageUrl(post, true)}#comments">Discuss</a>`;
     const feedItem: any = {
       title: post.title,
-      description: `${(post.contents && post.contents.html) || ""}<br/><br/>${postLink}`,
+      description: `${(post.contents && post.contents.html) || ""}<p>${postLink}</p>`,
       // LESSWRONG - changed how author is set for RSS because
       // LessWrong posts don't reliably have post.author defined.
       //author: post.author,
