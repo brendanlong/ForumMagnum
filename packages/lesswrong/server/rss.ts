@@ -25,7 +25,10 @@ export const getMeta = (url: string) => {
     description: taglineSetting.get(),
     feed_url: url,
     site_url: siteUrl,
-    image_url: "https://res.cloudinary.com/lesswrong-2-0/image/upload/v1497915096/favicon_lncumn.ico"
+    image_url: "https://res.cloudinary.com/lesswrong-2-0/image/upload/v1497915096/favicon_lncumn.ico",
+    custom_namespaces: {
+      "content": "http://purl.org/rss/1.0/modules/content/"
+    }
   };
 };
 
@@ -84,9 +87,16 @@ export const servePostRSS = async (terms: RSSTerms,) => {
     let date = (viewDate > thresholdDate) ? viewDate : thresholdDate;
 
     const postLink = `<a href="${postGetPageUrl(post, true)}#comments">Discuss</a>`;
+    const fullContent = `${(post.contents && post.contents.html) || ""}<p>${postLink}</p>`;
+
+    // Use social preview text for description if available, then plaintext description, then full content
+    const description = post.socialPreviewData?.text
+      || post.contents?.plaintextDescription
+      || fullContent;
+
     const feedItem: any = {
       title: post.title,
-      description: `${(post.contents && post.contents.html) || ""}<p>${postLink}</p>`,
+      description,
       // LESSWRONG - changed how author is set for RSS because
       // LessWrong posts don't reliably have post.author defined.
       //author: post.author,
@@ -95,7 +105,10 @@ export const servePostRSS = async (terms: RSSTerms,) => {
       // date: post.postedAt
       date: date,
       guid: post._id,
-      url: postGetPageUrl(post, true)
+      url: postGetPageUrl(post, true),
+      custom_elements: [
+        {"content:encoded": {_cdata: fullContent}}
+      ]
     };
 
     feed.item(feedItem);
