@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useRef } from 'react';
-import { isMobile } from '../../lib/utils/isMobile'
+import { isTouchPrimaryDevice } from '../../lib/utils/isMobile'
 import { defineStyles } from '../hooks/useStyles';
 import { JssStyles } from '@/lib/jssStyles';
 import { strongVoteDelay } from './constants';
@@ -144,8 +144,8 @@ export const VoteButtonAnimation = ({
     }
   }, [currentStrength]);
 
-  const handleMouseDown = () => { // This handler is only used on desktop
-    if(!isMobile()) {
+  const handleMouseDown = () => { // This handler is only used with a mouse (click-and-hold)
+    if(!isTouchPrimaryDevice()) {
       if (animationState.current.mode === "idle") {
         if (animationState.current.vote === "big") {
           vote("small");
@@ -183,8 +183,8 @@ export const VoteButtonAnimation = ({
     }
   }
 
-  const handleMouseUp = () => { // This handler is only used on desktop
-    if(!isMobile()) {
+  const handleMouseUp = () => { // This handler is only used with a mouse (click-and-hold)
+    if(!isTouchPrimaryDevice()) {
       if (animationState.current.mode === "completed") {
         vote("big");
         animationState.current = {
@@ -211,8 +211,8 @@ export const VoteButtonAnimation = ({
     }
   }
   
-  const handleClick = () => { // This handler is only used for mobile
-    if(isMobile()) {
+  const handleClick = () => { // This handler is only used on touch devices (tap-to-cycle)
+    if(isTouchPrimaryDevice()) {
       // This causes the following behavior (repeating after 3rd click):
       // 1st Click: small upvote; 2nd Click: big upvote; 3rd Click: cancel big upvote (i.e. going back to no vote)
       if (currentStrength === "small") {
