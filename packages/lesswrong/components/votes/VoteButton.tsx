@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useRef } from 'react';
-import { isTouchPrimaryDevice } from '../../lib/utils/isMobile'
+import { isMobile } from '../../lib/utils/isMobile'
 import { defineStyles } from '../hooks/useStyles';
 import { JssStyles } from '@/lib/jssStyles';
 import { strongVoteDelay } from './constants';
@@ -145,27 +145,16 @@ export const VoteButtonAnimation = ({
     }
   }, [currentStrength]);
 
-  // Tracks the pointer type ("mouse" | "touch" | "pen") of the in-progress
-  // interaction, recorded on pointerdown (which fires before the compatibility
-  // mouse and click events). This lets a device that supports both mouse and
-  // touch use click-and-hold when using the mouse and tap-to-vote when
-  // touching, rather than committing to one behavior for the whole device.
+  // pointerdown fires before the compatibility mouse/click events, so recording
+  // pointerType here lets a hybrid mouse+touch device pick its vote behavior per
+  // interaction rather than per device.
   const lastPointerType = useRef<string | null>(null);
-
   const handlePointerDown = (event: React.PointerEvent) => {
     lastPointerType.current = event.pointerType;
   };
-
-  // Whether the current interaction should use the tap-to-vote behavior (touch)
-  // rather than click-and-hold (mouse/pen). Falls back to the device-level
-  // heuristic if we have no pointer info for this interaction, e.g. a
-  // programmatic or keyboard-driven click with no preceding pointerdown.
-  const currentInteractionUsesTap = () => {
-    if (lastPointerType.current !== null) {
-      return lastPointerType.current === "touch";
-    }
-    return isTouchPrimaryDevice();
-  };
+  // Fall back to isMobile() for clicks with no preceding pointerdown (keyboard/programmatic).
+  const currentInteractionUsesTap = () =>
+    lastPointerType.current !== null ? lastPointerType.current === "touch" : !!isMobile();
 
   const handleMouseDown = () => { // Mouse/pen interactions only (click-and-hold)
     if(!currentInteractionUsesTap()) {

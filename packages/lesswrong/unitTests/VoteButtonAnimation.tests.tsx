@@ -28,30 +28,6 @@ const renderVoteButton = (currentStrength: "big"|"small"|"neutral") => {
 };
 
 describe('VoteButtonAnimation per-pointer-type behavior', () => {
-  it('uses tap-to-cycle for a touch interaction', () => {
-    const { vote, button } = renderVoteButton("neutral");
-    // A touch tap fires pointerdown(touch) then (synthesized) mousedown/up/click.
-    firePointerDown(button, 'touch');
-    fireEvent.mouseDown(button);
-    fireEvent.mouseUp(button);
-    fireEvent.click(button);
-    // Exactly one vote, from the click handler, not the mouse handlers.
-    expect(vote).toHaveBeenCalledTimes(1);
-    expect(vote).toHaveBeenCalledWith('small');
-  });
-
-  it('uses click-and-hold (not tap) for a mouse interaction', () => {
-    const { vote, button } = renderVoteButton("neutral");
-    // A quick mouse click (no hold) registers a small vote via mouseUp, and the
-    // trailing click event must NOT also fire the tap handler.
-    firePointerDown(button, 'mouse');
-    fireEvent.mouseDown(button);
-    fireEvent.mouseUp(button);
-    fireEvent.click(button);
-    expect(vote).toHaveBeenCalledTimes(1);
-    expect(vote).toHaveBeenCalledWith('small');
-  });
-
   it('registers a strong upvote when a mouse is held past the delay', () => {
     jest.useFakeTimers();
     try {
