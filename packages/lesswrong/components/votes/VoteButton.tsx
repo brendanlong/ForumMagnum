@@ -111,6 +111,7 @@ type VoteButtonAnimationState =
 export type VoteButtonAnimationHandlers = {
   state: VoteButtonAnimationState
   eventHandlers: {
+    onPointerDown: (event: React.PointerEvent) => void,
     onMouseDown: any,
     onMouseUp: any,
     onMouseOut: any,
@@ -144,8 +145,30 @@ export const VoteButtonAnimation = ({
     }
   }, [currentStrength]);
 
-  const handleMouseDown = () => { // This handler is only used with a mouse (click-and-hold)
-    if(!isTouchPrimaryDevice()) {
+  // Tracks the pointer type ("mouse" | "touch" | "pen") of the in-progress
+  // interaction, recorded on pointerdown (which fires before the compatibility
+  // mouse and click events). This lets a device that supports both mouse and
+  // touch use click-and-hold when using the mouse and tap-to-vote when
+  // touching, rather than committing to one behavior for the whole device.
+  const lastPointerType = useRef<string | null>(null);
+
+  const handlePointerDown = (event: React.PointerEvent) => {
+    lastPointerType.current = event.pointerType;
+  };
+
+  // Whether the current interaction should use the tap-to-vote behavior (touch)
+  // rather than click-and-hold (mouse/pen). Falls back to the device-level
+  // heuristic if we have no pointer info for this interaction, e.g. a
+  // programmatic or keyboard-driven click with no preceding pointerdown.
+  const currentInteractionUsesTap = () => {
+    if (lastPointerType.current !== null) {
+      return lastPointerType.current === "touch";
+    }
+    return isTouchPrimaryDevice();
+  };
+
+  const handleMouseDown = () => { // Mouse/pen interactions only (click-and-hold)
+    if(!currentInteractionUsesTap()) {
       if (animationState.current.mode === "idle") {
         if (animationState.current.vote === "big") {
           vote("small");
@@ -183,8 +206,8 @@ export const VoteButtonAnimation = ({
     }
   }
 
-  const handleMouseUp = () => { // This handler is only used with a mouse (click-and-hold)
-    if(!isTouchPrimaryDevice()) {
+  const handleMouseUp = () => { // Mouse/pen interactions only (click-and-hold)
+    if(!currentInteractionUsesTap()) {
       if (animationState.current.mode === "completed") {
         vote("big");
         animationState.current = {
@@ -211,8 +234,8 @@ export const VoteButtonAnimation = ({
     }
   }
   
-  const handleClick = () => { // This handler is only used on touch devices (tap-to-cycle)
-    if(isTouchPrimaryDevice()) {
+  const handleClick = () => { // Touch interactions only (tap-to-cycle)
+    if(currentInteractionUsesTap()) {
       // This causes the following behavior (repeating after 3rd click):
       // 1st Click: small upvote; 2nd Click: big upvote; 3rd Click: cancel big upvote (i.e. going back to no vote)
       if (currentStrength === "small") {
@@ -244,6 +267,7 @@ export const VoteButtonAnimation = ({
 
   return children({
     eventHandlers: {
+      onPointerDown: handlePointerDown,
       onMouseDown: handleMouseDown,
       onMouseUp: handleMouseUp,
       onClick: handleClick,
